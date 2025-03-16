@@ -93,19 +93,26 @@ struct CalendarView: View {
                             )
                         }
                         .contextMenu {
-                            // Add custom images to the context menu
-                            ForEach(moodImages, id: \.self) { moodImage in
-                                Button(action: {
-                                    // Save the selected image for the specific date
-                                    moodSelections[formattedDate(date)] = moodImage
-                                    saveSelections() // Save the selections to UserDefaults
-                                }) {
-                                    Image(moodImage)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 40, height: 40) // Set the size for each image in the menu
-                                    Text(moodImage.capitalized)
+                            // Only allow mood selection if the date is not in the future
+                            if !calendar.isDateInFuture(date) {
+                                // Add custom images to the context menu
+                                ForEach(moodImages, id: \.self) { moodImage in
+                                    Button(action: {
+                                        // Save the selected image for the specific date
+                                        moodSelections[formattedDate(date)] = moodImage
+                                        saveSelections() // Save the selections to UserDefaults
+                                    }) {
+                                        Image(moodImage)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 40, height: 40) // Set the size for each image in the menu
+                                        Text(moodImage.capitalized)
+                                    }
                                 }
+                            } else {
+                                Text("No mood selection for future days")
+                                    .foregroundColor(.gray)
+                                    .padding()
                             }
                         }
                     }
@@ -150,17 +157,16 @@ struct CalendarView: View {
 
     // Function to get the background color for each tile based on the current theme
     private func getTileColor(for date: Date) -> Color {
-        if colorScheme == .dark {
-            if calendar.isDateInToday(date) {
-                return Color.blue.opacity(0.2) // Highlight today with a light blue color in dark mode
-            } else {
-                return Color.gray.opacity(0.2) // Dark gray background for other days in dark mode
-            }
+        if calendar.isDateInToday(date) {
+            return Color.blue.opacity(0.2) // Highlight today with a light blue color
+        } else if date > Date() {
+            // Future days are grayed out
+            return Color.gray.opacity(0.3) // Light gray color for future days
         } else {
-            if calendar.isDateInToday(date) {
-                return Color.blue.opacity(0.2) // Highlight today with a light blue color in light mode
+            if colorScheme == .dark {
+                return Color.gray.opacity(0.2) // Dark gray background for past days in dark mode
             } else {
-                return Color(UIColor.systemGray6) // Light gray background for other days in light mode
+                return Color(UIColor.systemGray6) // Light gray background for past days in light mode
             }
         }
     }
@@ -193,5 +199,11 @@ struct CalendarView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: currentDate)
+    }
+}
+
+extension Calendar {
+    func isDateInFuture(_ date: Date) -> Bool {
+        return date > Date() // Check if the date is in the future
     }
 }
