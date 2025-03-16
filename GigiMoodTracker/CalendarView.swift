@@ -5,11 +5,12 @@ struct CalendarView: View {
     let daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
     // Add custom image names to the array
-    let moodImages = ["bad", "neutral", "good"] // These are the image names you added to the asset catalog
+    let moodImages = ["bad", "neutral", "good"]
 
     @State private var moodSelections: [String: String] = [:]
     @State private var currentDate = Date()
-    @Environment(\.colorScheme) var colorScheme // To detect the current color scheme (light or dark)
+    @Environment(\.colorScheme) var colorScheme
+    @State private var currentMonth: String = ""
 
     var body: some View {
         GeometryReader { geometry in
@@ -84,9 +85,9 @@ struct CalendarView: View {
                                         .frame(width: 40, height: 40) // Adjust size of the image
                                 }
                             }
-                            .frame(width: columnWidth, height: rowHeight) // Ensure each day has equal width and height
+                            .frame(width: columnWidth, height: rowHeight)
                             .background(getTileColor(for: date)) // Set background color for each square
-                            .overlay( // Apply border only to the outer edges of the calendar grid
+                            .overlay(
                                 RoundedRectangle(cornerRadius: 0)
                                     .stroke(Color.black, lineWidth: 1)
                                     .opacity(0.1) // Lighten the border for a softer look
@@ -95,17 +96,15 @@ struct CalendarView: View {
                         .contextMenu {
                             // Only allow mood selection if the date is not in the future
                             if !calendar.isDateInFuture(date) {
-                                // Add custom images to the context menu
                                 ForEach(moodImages, id: \.self) { moodImage in
                                     Button(action: {
-                                        // Save the selected image for the specific date
                                         moodSelections[formattedDate(date)] = moodImage
-                                        saveSelections() // Save the selections to UserDefaults
+                                        saveMoodSelection(date: formattedDate(date), moodImage: moodImage) // Save to Core Data
                                     }) {
                                         Image(moodImage)
                                             .resizable()
                                             .scaledToFit()
-                                            .frame(width: 40, height: 40) // Set the size for each image in the menu
+                                            .frame(width: 40, height: 40)
                                         Text(moodImage.capitalized)
                                     }
                                 }
@@ -117,8 +116,8 @@ struct CalendarView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 10) // Apply slight padding to the entire grid for left and right margins
-                .border(Color.black, width: 1) // Add border around the entire calendar grid
+                .padding(.horizontal, 10)
+                .border(Color.black, width: 1)
             }
         }
         .onAppear {
@@ -133,13 +132,41 @@ struct CalendarView: View {
         return formatter.string(from: currentDate)
     }
 
-    // Function to get first day of the current month
+    private func loadSelectionsForMonth() {
+        // Get the current month in "YYYY-MM" format
+        let currentMonthKey = getFormattedMonthYearKey()
+        currentMonth = currentMonthKey
+
+        var moodSelectionsDict: [String: String] = [:]  // Store date as String as per your Core Data model
+
+        // Fetch all the moods for the current month (by date)
+        let moodSelections = CoreDataManager.shared.fetchSelections(forMonth: currentMonthKey)
+
+        // Check if there are any mood selections
+        if !moodSelections.isEmpty {
+            // Map fetched selections into a dictionary with string as key and moodValue as value
+            moodSelectionsDict = moodSelections.reduce(into: [:]) { result, selection in
+                if let date = selection.date, let moodValue = selection.moodValue {
+                    result[date] = moodValue  // Store the date string as key
+                }
+            }
+        }
+
+        // Update the moodSelections dictionary for the UI display
+        self.moodSelections = moodSelectionsDict
+    }
+
+    // Save the mood selection to Core Data
+    private func saveMoodSelection(date: String, moodImage: String) {
+        // Check if this date already exists
+        CoreDataManager.shared.updateMoodSelection(dateString: date, moodValue: moodImage)
+    }
+
     private func getFirstDayOfMonth() -> Date {
         let components = calendar.dateComponents([.year, .month], from: currentDate)
         return calendar.date(from: components)!
     }
 
-    // Function to get all days in the current month
     private func daysInMonth() -> [Date] {
         let firstDay = getFirstDayOfMonth()
         let range = calendar.range(of: .day, in: .month, for: firstDay)!
@@ -148,56 +175,37 @@ struct CalendarView: View {
         }
     }
 
-    // Function to format date as a string
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
     }
 
-    // Function to get the background color for each tile based on the current theme
     private func getTileColor(for date: Date) -> Color {
         if calendar.isDateInToday(date) {
-            return Color.blue.opacity(0.2) // Highlight today with a light blue color
+            return Color.blue.opacity(0.2)
         } else if date > Date() {
-            // Future days are grayed out
-            return Color.gray.opacity(0.3) // Light gray color for future days
+            return Color.gray.opacity(0.3)
         } else {
             if colorScheme == .dark {
-                return Color.gray.opacity(0.2) // Dark gray background for past days in dark mode
+                return Color.gray.opacity(0.2)
             } else {
-                return Color(UIColor.systemGray6) // Light gray background for past days in light mode
+                return Color(UIColor.systemGray6)
             }
         }
     }
 
-    // Function to get the text color for each tile based on the current theme
     private func getTextColor(for date: Date) -> Color {
         if colorScheme == .dark {
-            return Color.white // Text color is white in dark mode
+            return Color.white
         } else {
-            return Color.black.opacity(0.8) // Slightly softer black for light mode text
+            return Color.black.opacity(0.8)
         }
     }
 
-    // Function to load the saved selections for the current month
-    private func loadSelectionsForMonth() {
-        let currentMonthKey = getFormattedMonthYearKey()
-        if let savedSelections = UserDefaults.standard.dictionary(forKey: currentMonthKey) as? [String: String] {
-            moodSelections = savedSelections
-        }
-    }
-
-    // Function to save the selections to UserDefaults
-    private func saveSelections() {
-        let currentMonthKey = getFormattedMonthYearKey()
-        UserDefaults.standard.set(moodSelections, forKey: currentMonthKey)
-    }
-
-    // Function to get a unique key for the current month and year (e.g., "March 2025")
     private func getFormattedMonthYearKey() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
+        formatter.dateFormat = "yyyy-MM"
         return formatter.string(from: currentDate)
     }
 }
