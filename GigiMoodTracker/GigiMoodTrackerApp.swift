@@ -2,7 +2,7 @@
 //  GigiMoodTrackerApp.swift
 //  GigiMoodTracker
 //
-//  Created by Kyle Forker on 3/16/25.
+//  Created by Kyle on 3/16/25.
 //
 
 import SwiftUI
