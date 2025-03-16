@@ -9,18 +9,40 @@ struct CalendarView: View {
 
     @State private var moodSelections: [String: String] = [:]
     @State private var currentDate = Date()
-
-    @Environment(\.colorScheme) var colorScheme // Access the current color scheme (light/dark)
+    @Environment(\.colorScheme) var colorScheme // To detect the current color scheme (light or dark)
 
     var body: some View {
         GeometryReader { geometry in
             VStack {
-                // Month and Year at the top
-                Text(getMonthYearString())
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .padding(.top)
-                    .padding(.bottom, 10)
+                // Month and Year at the top with previous and next buttons
+                HStack {
+                    Button(action: {
+                        // Go to previous month
+                        currentDate = calendar.date(byAdding: .month, value: -1, to: currentDate)!
+                        loadSelectionsForMonth()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title)
+                            .padding(.leading)
+                    }
+
+                    Text(getMonthYearString())
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .padding(.top)
+                        .padding(.bottom, 10)
+
+                    Button(action: {
+                        // Go to next month
+                        currentDate = calendar.date(byAdding: .month, value: 1, to: currentDate)!
+                        loadSelectionsForMonth()
+                    }) {
+                        Image(systemName: "chevron.right")
+                            .font(.title)
+                            .padding(.trailing)
+                    }
+                }
+                .padding(.bottom, 10)
 
                 // Day of the week headers
                 HStack {
@@ -53,7 +75,7 @@ struct CalendarView: View {
                             VStack(spacing: 0) {
                                 Text("\(calendar.component(.day, from: date))")
                                     .font(.headline)
-                                    .foregroundColor(colorScheme == .dark ? .white : .black) // Adjust text color for dark mode
+                                    .foregroundColor(getTextColor(for: date)) // Adjust text color based on theme
 
                                 if let selectedMood = moodSelections[formattedDate(date)] {
                                     Image(selectedMood) // Show selected image based on the mood key
@@ -63,14 +85,12 @@ struct CalendarView: View {
                                 }
                             }
                             .frame(width: columnWidth, height: rowHeight) // Ensure each day has equal width and height
-                            .background(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.white) // Adapt to light/dark theme
+                            .background(getTileColor(for: date)) // Set background color for each square
                             .overlay( // Apply border only to the outer edges of the calendar grid
                                 RoundedRectangle(cornerRadius: 0)
                                     .stroke(Color.black, lineWidth: 1)
+                                    .opacity(0.1) // Lighten the border for a softer look
                             )
-                        }
-                        .onLongPressGesture {
-                            // Show the context menu for the selected date on long press
                         }
                         .contextMenu {
                             // Add custom images to the context menu
@@ -78,15 +98,13 @@ struct CalendarView: View {
                                 Button(action: {
                                     // Save the selected image for the specific date
                                     moodSelections[formattedDate(date)] = moodImage
+                                    saveSelections() // Save the selections to UserDefaults
                                 }) {
-                                    HStack {
-                                        Image(moodImage)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 40, height: 40) // Set the size for each image in the menu
-                                        Text(moodImage.capitalized) // Display text next to the image
-                                            .font(.body)
-                                    }
+                                    Image(moodImage)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 40, height: 40) // Set the size for each image in the menu
+                                    Text(moodImage.capitalized)
                                 }
                             }
                         }
@@ -95,6 +113,9 @@ struct CalendarView: View {
                 .padding(.horizontal, 10) // Apply slight padding to the entire grid for left and right margins
                 .border(Color.black, width: 1) // Add border around the entire calendar grid
             }
+        }
+        .onAppear {
+            loadSelectionsForMonth() // Load selections when the view appears
         }
     }
 
@@ -125,5 +146,52 @@ struct CalendarView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
+    }
+
+    // Function to get the background color for each tile based on the current theme
+    private func getTileColor(for date: Date) -> Color {
+        if colorScheme == .dark {
+            if calendar.isDateInToday(date) {
+                return Color.blue.opacity(0.2) // Highlight today with a light blue color in dark mode
+            } else {
+                return Color.gray.opacity(0.2) // Dark gray background for other days in dark mode
+            }
+        } else {
+            if calendar.isDateInToday(date) {
+                return Color.blue.opacity(0.2) // Highlight today with a light blue color in light mode
+            } else {
+                return Color(UIColor.systemGray6) // Light gray background for other days in light mode
+            }
+        }
+    }
+
+    // Function to get the text color for each tile based on the current theme
+    private func getTextColor(for date: Date) -> Color {
+        if colorScheme == .dark {
+            return Color.white // Text color is white in dark mode
+        } else {
+            return Color.black.opacity(0.8) // Slightly softer black for light mode text
+        }
+    }
+
+    // Function to load the saved selections for the current month
+    private func loadSelectionsForMonth() {
+        let currentMonthKey = getFormattedMonthYearKey()
+        if let savedSelections = UserDefaults.standard.dictionary(forKey: currentMonthKey) as? [String: String] {
+            moodSelections = savedSelections
+        }
+    }
+
+    // Function to save the selections to UserDefaults
+    private func saveSelections() {
+        let currentMonthKey = getFormattedMonthYearKey()
+        UserDefaults.standard.set(moodSelections, forKey: currentMonthKey)
+    }
+
+    // Function to get a unique key for the current month and year (e.g., "March 2025")
+    private func getFormattedMonthYearKey() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: currentDate)
     }
 }
