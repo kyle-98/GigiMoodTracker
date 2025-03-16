@@ -4,10 +4,13 @@ struct CalendarView: View {
     let calendar = Calendar.current
     let daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-    let moodImages = ["bad", "neutral", "good"]
+    // Add custom image names to the array
+    let moodImages = ["bad", "neutral", "good"] // These are the image names you added to the asset catalog
 
     @State private var moodSelections: [String: String] = [:]
     @State private var currentDate = Date()
+
+    @Environment(\.colorScheme) var colorScheme // Access the current color scheme (light/dark)
 
     var body: some View {
         GeometryReader { geometry in
@@ -30,12 +33,12 @@ struct CalendarView: View {
                 .padding(.bottom, 5)
 
                 // Calendar grid
-                let columnWidth = (geometry.size.width - 40) / 7
-                let rowHeight: CGFloat = 90
+                let columnWidth = (geometry.size.width - 40) / 7 // Adjust column width based on screen size
+                let rowHeight: CGFloat = 90 // Set a fixed height for each row
 
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(columnWidth), spacing: 0), count: 7), spacing: 0) {
                     let firstDayOfMonth = getFirstDayOfMonth()
-                    let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth) - 1
+                    let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth) - 1 // Adjust for Sunday start
 
                     // Empty spaces before the first day of the month
                     ForEach(0..<firstWeekday, id: \.self) { _ in
@@ -50,78 +53,65 @@ struct CalendarView: View {
                             VStack(spacing: 0) {
                                 Text("\(calendar.component(.day, from: date))")
                                     .font(.headline)
-                                    .foregroundColor(.black)
+                                    .foregroundColor(colorScheme == .dark ? .white : .black) // Adjust text color for dark mode
 
                                 if let selectedMood = moodSelections[formattedDate(date)] {
-                                    Image(selectedMood)
+                                    Image(selectedMood) // Show selected image based on the mood key
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 40, height: 40)
+                                        .frame(width: 40, height: 40) // Adjust size of the image
                                 }
                             }
-                            .frame(width: columnWidth, height: rowHeight)
-                            .background(Color.white)
+                            .frame(width: columnWidth, height: rowHeight) // Ensure each day has equal width and height
+                            .background(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.white) // Adapt to light/dark theme
                             .overlay( // Apply border only to the outer edges of the calendar grid
                                 RoundedRectangle(cornerRadius: 0)
                                     .stroke(Color.black, lineWidth: 1)
                             )
                         }
                         .onLongPressGesture {
-                            showContextMenu(for: date)
+                            // Show the context menu for the selected date on long press
                         }
                         .contextMenu {
+                            // Add custom images to the context menu
                             ForEach(moodImages, id: \.self) { moodImage in
                                 Button(action: {
+                                    // Save the selected image for the specific date
                                     moodSelections[formattedDate(date)] = moodImage
-                                    saveSelections() // Save the new selection
                                 }) {
                                     HStack {
                                         Image(moodImage)
                                             .resizable()
                                             .scaledToFit()
-                                            .frame(width: 40, height: 40)
-                                        Text(moodImage.capitalized) // Add text next to the image
+                                            .frame(width: 40, height: 40) // Set the size for each image in the menu
+                                        Text(moodImage.capitalized) // Display text next to the image
+                                            .font(.body)
                                     }
                                 }
                             }
                         }
                     }
                 }
-                .padding(.horizontal, 10)
-                .border(Color.black, width: 1)
+                .padding(.horizontal, 10) // Apply slight padding to the entire grid for left and right margins
+                .border(Color.black, width: 1) // Add border around the entire calendar grid
             }
         }
-        .onAppear {
-            loadSelections() // Load saved selections when the view appears
-        }
     }
 
-    // Save the moodSelections to UserDefaults
-    private func saveSelections() {
-        if let encoded = try? JSONEncoder().encode(moodSelections) {
-            UserDefaults.standard.set(encoded, forKey: "moodSelections")
-        }
-    }
-
-    // Load the moodSelections from UserDefaults
-    private func loadSelections() {
-        if let savedData = UserDefaults.standard.data(forKey: "moodSelections"),
-           let decodedSelections = try? JSONDecoder().decode([String: String].self, from: savedData) {
-            moodSelections = decodedSelections
-        }
-    }
-
+    // Function to get the month and year string (e.g., "March 2025")
     private func getMonthYearString() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: currentDate)
     }
 
+    // Function to get first day of the current month
     private func getFirstDayOfMonth() -> Date {
         let components = calendar.dateComponents([.year, .month], from: currentDate)
         return calendar.date(from: components)!
     }
 
+    // Function to get all days in the current month
     private func daysInMonth() -> [Date] {
         let firstDay = getFirstDayOfMonth()
         let range = calendar.range(of: .day, in: .month, for: firstDay)!
@@ -130,6 +120,7 @@ struct CalendarView: View {
         }
     }
 
+    // Function to format date as a string
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
