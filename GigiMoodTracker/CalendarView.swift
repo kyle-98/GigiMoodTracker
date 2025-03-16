@@ -3,7 +3,9 @@ import SwiftUI
 struct CalendarView: View {
     let calendar = Calendar.current
     let daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    let moods = ["😊", "😐", "😢"] // Mood options
+
+    // Add custom image names to the array
+    let moodImages = ["bad", "neutral", "good"] // These are the image names you added to the asset catalog
 
     @State private var moodSelections: [String: String] = [:]
     @State private var currentDate = Date()
@@ -51,27 +53,39 @@ struct CalendarView: View {
                                     .font(.headline)
                                     .foregroundColor(.black)
 
-                                if let mood = moodSelections[formattedDate(date)] {
-                                    Text(mood) // Show selected emoji
-                                        .font(.largeTitle)
+                                if let selectedMood = moodSelections[formattedDate(date)] {
+                                    Image(selectedMood) // Show selected image based on the mood key
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 40, height: 40) // Adjust size of the image
                                 }
                             }
                             .frame(width: columnWidth, height: rowHeight) // Ensure each day has equal width and height
                             .background(Color.white) // Set background color for each square
-                            .border(Color.black, width: 1) // Add border for each day
+                            .overlay( // Apply border only to the outer edges of the calendar grid
+                                RoundedRectangle(cornerRadius: 0)
+                                    .stroke(Color.black, lineWidth: 1)
+                            )
                         }
                         .onLongPressGesture {
                             // Show the context menu for the selected date on long press
                             showContextMenu(for: date)
                         }
                         .contextMenu {
-                            // Emoji options in the context menu
-                            ForEach(moods, id: \.self) { mood in
+                            // Add custom images to the context menu
+                            ForEach(moodImages, id: \.self) { moodImage in
                                 Button(action: {
-                                    // Save the selected mood for the specific date
-                                    moodSelections[formattedDate(date)] = mood
+                                    // Save the selected image for the specific date
+                                    moodSelections[formattedDate(date)] = moodImage
                                 }) {
-                                    Text(mood)
+                                    HStack {
+                                        Image(moodImage)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 40, height: 40) // Set the size for each image in the menu
+                                        Text(moodImage.capitalized) // Add text next to the image
+                                            .font(.headline)
+                                    }
                                 }
                             }
                         }
