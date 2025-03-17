@@ -3,13 +3,14 @@ import CoreData
 class PersistenceController {
     static let shared = PersistenceController()
 
-    // The container is where your Core Data stack resides
+    // This will store the active container used to store all the mood selections for each day
     let container: NSPersistentContainer
 
+    // Get the container
     init() {
-        // The name here should be the name of the .xcdatamodeld file
-        container = NSPersistentContainer(name: "GigiMoodTracker") // Match with .xcdatamodeld name (without extension)
+        container = NSPersistentContainer(name: "GigiMoodStorage")
         
+        // Load the values stored in the core data container
         container.loadPersistentStores { description, error in
             if let error = error as NSError? {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
@@ -17,6 +18,7 @@ class PersistenceController {
         }
     }
 
+    // Return the values obtains from the container
     var viewContext: NSManagedObjectContext {
         return container.viewContext
     }
