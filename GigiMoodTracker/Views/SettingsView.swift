@@ -21,7 +21,7 @@ struct SettingsView: View {
             // Form the allow for storing settings functionalities
             Form {
                 Section(header: Text("Notifications")) {
-                    DatePicker("Reminder Time", selection: $notificationTime, displayedComponents: .hourAndMinute)
+                    DatePicker("Daily Reminder Time", selection: $notificationTime, displayedComponents: .hourAndMinute)
                         .onChange(of: notificationTime, initial: true) { oldValue, newValue in
                             scheduleDailyNotification(at: newValue)
                         }

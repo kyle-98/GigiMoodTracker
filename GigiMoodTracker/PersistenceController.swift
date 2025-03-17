@@ -8,7 +8,7 @@ class PersistenceController {
 
     // Get the container
     init() {
-        container = NSPersistentContainer(name: "GigiMoodTracker")
+        container = NSPersistentContainer(name: "GigiMoodStorage")
         
         // Load the values stored in the core data container
         container.loadPersistentStores { description, error in

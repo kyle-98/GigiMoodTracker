@@ -9,7 +9,7 @@ class CoreDataManager {
 
     //Initalize the container
     init() {
-        container = NSPersistentContainer(name: "Moods")
+        container = NSPersistentContainer(name: "GigiMoodStorage")
         container.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Failed to load Core Data stack: \(error)")
