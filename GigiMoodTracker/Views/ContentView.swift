@@ -9,7 +9,17 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        CalendarView()
+        NavigationStack {
+            CalendarView()
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        NavigationLink(destination: SettingsView()) {
+                            Image(systemName: "gearshape")
+                                .font(.title2)
+                        }
+                    }
+                }
+        }
     }
 }
 
