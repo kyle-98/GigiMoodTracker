@@ -9,8 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
+        // Main view
         NavigationStack {
+            // Populate the calendar for the current month
             CalendarView()
+                // Add a settings button in the top left
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         NavigationLink(destination: SettingsView()) {
@@ -23,6 +26,7 @@ struct ContentView: View {
     }
 }
 
+// Show the app in the debug preview
 #Preview {
     ContentView()
 }
