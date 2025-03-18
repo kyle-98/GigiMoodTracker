@@ -20,7 +20,6 @@ func checkMoodForToday() -> Bool {
 
     do {
         let results = try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
-        print("Fetched moods: \(results)")
         return results.isEmpty  // Return true if no mood is found for today
     } catch {
         print("Error fetching mood for today: \(error.localizedDescription)")
@@ -51,17 +50,11 @@ func scheduleDailyNotification(at time: Date) {
 
         // Create the notification request
         let request = UNNotificationRequest(identifier: "dailyMoodReminder", content: content, trigger: trigger)
-        print("Notification request: \(request)")
-
         // Schedule the notification
         center.add(request) { error in
             if let error = error {
                 print("Error scheduling notification: \(error)")
-            } else {
-                print("Notification scheduled successfully.")
             }
         }
-    } else {
-        print("Mood already set for today. No notification scheduled.")
     }
 }

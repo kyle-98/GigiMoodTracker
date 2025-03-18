@@ -73,4 +73,20 @@ class CoreDataManager {
             return []
         }
     }
+    
+    func deleteMoodSelection(dateString: String) {
+        let context = container.viewContext
+        let fetchRequest: NSFetchRequest<Mood> = Mood.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "date == %@", dateString)
+
+        do {
+            let results = try context.fetch(fetchRequest)
+            for object in results {
+                context.delete(object) // Remove the Core Data entry
+            }
+            try context.save() // Save changes
+        } catch {
+            print("Failed to delete mood selection: \(error)")
+        }
+    }
 }

@@ -107,6 +107,17 @@ struct CalendarView: View {
                                         Text(moodImage.capitalized)
                                     }
                                 }
+                                
+                                // Add a "Clear Selection" button if a mood is set for the day
+                                if moodSelections[formattedDate(date)] != nil {
+                                    Button(role: .destructive) {
+                                        moodSelections.removeValue(forKey: formattedDate(date)) // Remove from state
+                                        deleteMoodSelection(date: formattedDate(date)) // Delete from Core Data
+                                    } label: {
+                                        Label("Clear Selection", systemImage: "xmark.circle.fill")
+                                            .foregroundColor(.red) // Ensure text is red
+                                    }
+                                }
                             } else {
                                 Text("No mood selection for future days")
                                     .foregroundColor(.gray)
@@ -214,6 +225,11 @@ struct CalendarView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM"
         return formatter.string(from: currentDate)
+    }
+
+    // Remove the mood from a selected day
+    private func deleteMoodSelection(date: String) {
+        CoreDataManager.shared.deleteMoodSelection(dateString: date)
     }
 }
 
