@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var refreshFlag = false
+
     var body: some View {
-        // Main view
         NavigationStack {
-            // Populate the calendar for the current month
             CalendarView()
-                // Add a settings button in the top left
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         NavigationLink(destination: SettingsView()) {
@@ -22,11 +22,16 @@ struct ContentView: View {
                         }
                     }
                 }
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active {
+                        refreshCalendar()
+                    }
+                }
         }
     }
-}
 
-// Show the app in the debug preview
-#Preview {
-    ContentView()
+    // Function to trigger the refresh
+    private func refreshCalendar() {
+        refreshFlag.toggle()
+    }
 }
