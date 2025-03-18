@@ -9,7 +9,7 @@ import Foundation
 import CoreData
 import UIKit
 
-// Class for handling CSV generation and export
+// Class for handling CSV generation, export, and import
 class CSVManager {
 
     // Fetch all moods from core data
@@ -65,5 +65,54 @@ class CSVManager {
             }
         }
     }
+    
+    // Import data from CSV
+    static func importData(from url: URL) {
+        print("Importing data...")
+        DispatchQueue.global(qos: .background).async {
+            do {
+                // Read the CSV data
+                let data = try Data(contentsOf: url)
+                print(data)
+                
+                // Convert to a string
+                if let csvString = String(data: data, encoding: .utf8) {
+                    let rows = csvString.split(separator: "\n")
+                    
+                    // Clear existing Core Data
+                    clearExistingMoods()
+                    print("cleared moods")
+                    
+                    // Start inserting new data
+                    for row in rows.dropFirst() { // Skip header row
+                        let columns = row.split(separator: ",")
+                        if columns.count == 2 {
+                            CoreDataManager.shared.updateMoodSelection(dateString: String(columns[0]), moodValue: String(columns[1]))
+                        }
+                    }
+                    
+                    DispatchQueue.main.async {
+                        print("CSV import complete")
+                    }
+                }
+            } catch {
+                print("Error importing CSV: \(error)")
+            }
+        }
+    }
+    
+    // Clear existing moods from Core Data
+    private static func clearExistingMoods() {
+        let fetchRequest: NSFetchRequest<Mood> = Mood.fetchRequest()
+        let context = PersistenceController.shared.viewContext
+        do {
+            let moods = try context.fetch(fetchRequest)
+            for mood in moods {
+                context.delete(mood)
+            }
+            try context.save()
+        } catch {
+            print("Error clearing existing moods: \(error)")
+        }
+    }
 }
-

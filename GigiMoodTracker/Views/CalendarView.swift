@@ -13,6 +13,7 @@ struct CalendarView: View {
     var body: some View {
         GeometryReader { geometry in
             VStack {
+                
                 // Month and Year at the top with previous and next buttons
                 HStack {
                     Button(action: {
@@ -41,7 +42,7 @@ struct CalendarView: View {
                             .padding(.trailing)
                     }
                 }
-                .padding(.bottom, 10)
+                .padding(.bottom, 5)
 
                 // Day of the week headers
                 HStack {
@@ -199,7 +200,11 @@ struct CalendarView: View {
     // Get the color of a day square, if days in past or current, these will be available for the user to select moods for
     private func getTileColor(for date: Date) -> Color {
         if calendar.isDateInToday(date) {
-            return Color.blue.opacity(0.2)
+            if colorScheme == .dark {
+                return Color.blue.opacity(0.4)
+            } else {
+                return Color.blue.opacity(0.2)
+            }
         } else if date > Date() {
             return Color.gray.opacity(0.3)
         } else {
