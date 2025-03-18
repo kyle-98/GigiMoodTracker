@@ -17,20 +17,42 @@ struct SettingsView: View {
             Text("Settings")
                 .font(.largeTitle)
                 .bold()
-                .padding()
-            // Form the allow for storing settings functionalities
+                .padding(.top)
+
+            // Form for storing settings
             Form {
-                Section(header: Text("Notifications")) {
+                Section(header: Text("Notifications").font(.headline)) {
                     DatePicker("Daily Reminder Time", selection: $notificationTime, displayedComponents: .hourAndMinute)
                         .onChange(of: notificationTime, initial: true) { oldValue, newValue in
                             scheduleDailyNotification(at: newValue)
                         }
+                        .padding()
+                        
+                }
+                
+                Section {
+                    Button(action: {
+                        CSVManager.exportData()
+                    }) {
+                        Text("Export Data")
+                            .foregroundColor(.blue)
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.1)))
+                            
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
+            .listStyle(GroupedListStyle())
+            .background(Color(UIColor.systemGroupedBackground))
+            .cornerRadius(20)
             .padding()
 
             Spacer()
         }
+        .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
     }
 }
 
@@ -38,3 +60,4 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
 }
+
