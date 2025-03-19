@@ -73,7 +73,6 @@ class CSVManager {
             do {
                 // Read the CSV data
                 let data = try Data(contentsOf: url)
-                print(data)
                 
                 // Convert to a string
                 if let csvString = String(data: data, encoding: .utf8) {

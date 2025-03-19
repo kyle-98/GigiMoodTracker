@@ -36,29 +36,6 @@ struct ContentView: View {
                 }
                 .padding(.top, -10) // Ensure the top area has enough padding
             }
-        
-        
-        
-//        NavigationStack {
-//            CalendarView()
-//                .toolbar {
-//                    ToolbarItem(placement: .topBarLeading) {
-//                        NavigationLink(destination: SettingsView()) {
-//                            Image(systemName: "gearshape")
-//                                .font(.title3)
-//                        }
-//                        
-//                    }
-//                    
-//                }
-//                .onChange(of: scenePhase) { _, newPhase in
-//                    if newPhase == .active {
-//                        refreshCalendar()
-//                    }
-//                }
-//        }
-        
-        
     }
 
     // Function to trigger the refresh
